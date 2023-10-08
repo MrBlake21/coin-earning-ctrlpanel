@@ -7,8 +7,6 @@ use Illuminate\Support\Facades\Auth;
 use Spatie\Activitylog\Models\Activity;
 use App\Models\User;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Http;
-
 
 class EarnController extends Controller
 {
@@ -17,12 +15,8 @@ class EarnController extends Controller
         $this->middleware('auth');
     }
 
-
-    /** Show the application dashboard. */
     public function index(Request $request)
     {
-
-
         // RETURN ALL VALUES
         return view('earn')->with([
             // Coming Soon
@@ -31,124 +25,59 @@ class EarnController extends Controller
 
     public function start(Request $request)
     {
-
-        
         $randomnumber = rand(1000, 1500);
         $code = rand(20000, 30000);
 
-        $base = "https://link-to.net/" . 'yourid';
+        $base = "https://link-to.net/" . 'api';
         $base .= "/" . rand(100, 1000) . "." . rand(999, 10000000) . "/dynamic/?r=";
-        $base .= base64_encode(env('APP_URL', 'https://my.domain.example') . '/redeem?code=' . strval($code)); 
+        $base .= base64_encode(env('APP_URL', 'https://ctrlpanel.freehorizon.host') . '/redeem?code=' . strval($code));
 
+        // Set the start time in the session
+        Session::put('start_time', now());
 
-        return redirect()->away($base)->withCookie(cookie('earn_code', $code, 15));;
+        return redirect()->away($base)->withCookie(cookie('earn_code', $code, 15));
     }
 
     public function redeem(Request $request)
     {
-        $reward = 30;
+        // Get the start time from the session
+        $startTime = Session::get('start_time');
+
+        // Get the current time
+        $currentTime = now();
+
+        // Calculate the elapsed time in seconds
+        $elapsedTime = $currentTime->diffInSeconds($startTime);
+
+        // Check if the elapsed time is less than 60 seconds (1 minute)
+        if ($elapsedTime < 60) {
+            return redirect()->route('earn.index')->with('error', 'Please do not skip the advertising!');
+        }
+
+        $reward = 20;
 
         $code = $request->cookie('earn_code');
 
         $referer = request()->headers->get('referer');
 
-        if (!str_contains($referer, 'linkvertise.com'))
-        {
-         
+        if (!str_contains($referer, 'linkvertise.com')) {
             // @Aronik if necessary add Discord logging again -> I can also implement a handler for it
             return redirect()->route('earn.index')->with('error', __("You bypassed linkvertise! Please don't use cheats."));
         }
 
-        if($request->query('code') !== $code)
-        {
+        if ($request->query('code') !== $code) {
             // @Aronik if necessary add Discord logging again -> I can also implement a handler for it
             return redirect()->route('earn.index')->with('error', __("We cannot verify this being a legitimate request. Please try again later."));
         }
 
         Auth::user()->increment('credits', $reward);
 
-        return redirect()->route('earn.index')->with('success', __("You successfully got Coins!"))->withoutCookie('earn_code');
-    }
-    
-    public function adsense(Request $request)
-    {
-        
-        $timerStart = now();
-        Session::put('adsense_start', $timerStart);
-  
-        return redirect()->route('earn.adpage')->with('success', __("Adsense is starting now..."));
-    }
-        
-        public function timerPage()
-        {
-            $reward_a = 5;
-            $button = false;
-            
-            if (Session::has('adsense_start')) {
-                $timerStart = Session::get('adsense_start');
-                $currentTime = now();
-                $elapsedTime = $currentTime->diffInSeconds($timerStart);
-                $remainingTime = max(10 - $elapsedTime, 0);
-
-                if ($remainingTime === 0) {
-                    // Here you can add logic to award coins to the user
-                    Auth::user()->increment('credits', $reward_a);
-                    Session::forget('adsense_start'); // Reset the timer
-                    
-                    $button = true;
-                }
-
-                return view('earn.adpage', [
-                    'remainingTime' => $remainingTime,
-                    'button' => $button,
-                ]);
-            }
-
-            return view('earn.adpage', [
-                'remainingTime' => null,
-                'coinsEarned' => 0,
-                        'button' => $button,
-            ]);
-        }
-    
-        public function redirectToEarnIndex()
-    {
-        
+        // Clear the start time from the session
+        Session::forget('start_time');
 
         return redirect()->route('earn.index')->with('success', __("You successfully got Coins!"))->withoutCookie('earn_code');
     }
 
-    public function clickcoin(Request $request)
-{
-    $clickcoinReward = 1; // Define the reward amount here
-
-    $lastClickTime = $request->session()->get('clickcoin_last_click', null);
-    $minTimeBetweenClicks = 60; // Minimum time between clicks in seconds (adjust as needed)
-
-    // Update the last click time immediately to prevent multiple clicks
-    $request->session()->put('clickcoin_last_click', now());
-
-    if ($lastClickTime !== null && now()->diffInSeconds($lastClickTime) < $minTimeBetweenClicks) {
-        // Spam protection: User clicked too quickly, show an error message or redirect them back.
-        return redirect()->route('earn.index')->with('error', 'Please wait 60 seconds before clicking again.');
-    }
-
-    // Redirect the user to the specified link
-    $clickcoinLink = 'your direct ad link';
-
-    // Check if the redirection is successful
-    $response = Http::get($clickcoinLink);
-
-    if ($response->status() === 200) {
-        // Award the reward to the user
-        $user = Auth::user();
-        $user->increment('credits', $clickcoinReward);
-
-        return redirect()->away($clickcoinLink)->with('success', 'You earned ' . $clickcoinReward . ' coins!');
-    } else {
-        // If the redirection was not successful, show an error message or handle it accordingly.
-        return redirect()->route('earn.index')->with('error', 'Failed to redirect to Clickcoin link.');
-    }
-}
+    // Rest of your methods...
 
 }

@@ -93,7 +93,7 @@
                                 @if(true)
                                 <tr>
                                     <td>Linkvertise</td>
-                                    <td><span class="badge bg-light text-dark">30 Coins</span></td>
+                                    <td><span class="badge bg-light text-dark">20 Coins</span></td>
                                     <td><span class="badge bg-success">Available</span></td>
                                     <td><a href="{{ url('earn/lv') }}">
                                         <Button class="btn btn-primary px-4 py-2">Start</Button>
@@ -104,22 +104,11 @@
                                 @if(true)
                                 <tr>
                                     <td>Adsense</td>
-                                    <td><span class="badge bg-light text-dark">5 Coins</span></td>
-                                    <td><span class="badge bg-success">Available</span></td>
+                                    <td><span class="badge bg-light text-dark">0 Coins</span></td>
+                                    <td><span class="badge bg-danger">Disabled</span></td>
                                     <td><a href="{{ url('earn/ad') }}">
-                                        <Button class="btn btn-primary px-4 py-2">Start</Button>
+                                        <!--<Button class="btn btn-primary px-4 py-2">Start</Button>-->
                                     </a></td>
-                                </tr>
-                                @endif
-
-                                @if(true)
-                                <tr>
-                                   <td>Clickcoin</td>
-                                   <td><span class="badge bg-light text-dark">1 Coins</span></td> <!-- Replace X with the actual reward amount -->
-                                   <td><span class="badge bg-success">Available</span></td>
-                                   <td><a href="{{ url('earn/clickcoin') }}" target="_blank">
-                                       <button class="btn btn-primary px-2 py-1">Start</button>
-                                     </a></td>
                                 </tr>
                                 @endif
                             </tbody>
